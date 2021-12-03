@@ -5,6 +5,28 @@ import urequests
 import network
 import json
 import gc
+import os
+
+class Config:
+    SSID='ARRIS-9FE2' # SSID of your WiFi network
+    PASSWORD='FBD7AD20BDAE434300' # Password of your WiFi network
+    API_URL='http://192.168.0.16:3000/api/iot/notification' # URL of your API
+
+class Logger:
+    def info(self, msg):
+        print("INFO: ", msg)
+
+    def error(self, msg):
+        print("ERROR: ", msg)
+
+    def debug(self, msg):
+        print("DEBUG: ", msg)
+
+    def warning(self, msg):
+        print("WARNING: ", msg)
+
+logger = Logger()
+config = Config()
 
 class HCSR04:
     """
@@ -77,39 +99,43 @@ class HCSR04:
 
 
 class WIFI:
+    """
+    Initialize the integrated WIFI module
+    """
     def __init__(self, ssid, password):
         self.ssid = ssid
         self.password = password
 
 
     def connect(self):
+        """Connect to the WIFI network"""
         wlan = network.WLAN(network.STA_IF)
         if not wlan.isconnected():
             wlan.active(True)
             wlan.connect(self.ssid, self.password)
             timeout = time.time ()
-            print('Connecting...')
+            logger.info('Connecting to WIFI...')
             while not wlan.isconnected():
                 if (time.ticks_diff (time.time (), timeout) > 60):
                     return False
-            print('Network config:', wlan.ifconfig())
+            logger.debug('Network config: ' + wlan.ifconfig())
 
         return wlan
 
 class App:
     def __init__(self):
         self.sensor = HCSR04(trigger_pin=12, echo_pin=14, echo_timeout_us=10000)
-        self.wifi = WIFI('ARRIS-9FE2', 'FBD7AD20BDAE434300').connect()
+        self.wifi = WIFI(config.SSID , config.PASSWORD).connect()
 
     def run_again(self):
-        print('Running again...')
+        logger.debug('Running again...')
         self.run()
 
     def run(self):
         gc.collect()
         gc.threshold(gc.mem_free() // 4 + gc.mem_alloc())
         if self.wifi:
-            print('Conectado')
+            logger.debug('Connected to WIFI')
             while True:
 
                 if not self.wifi.isconnected():
@@ -117,35 +143,38 @@ class App:
 
                 distance = self.sensor.distance_cm()
 
-                if distance <= 5:
+                if distance <= 5 and distance > 0:
+                    logger.info('Sending with distance \n')
+                    logger.info(distance)
                     success = self.sendRequest(distance)
                     if success:
                         break
 
-                print('Distance:', distance, 'cm')
+                logger.info('Distance:' + str(distance) + 'cm')
                 sleep(1)
-            sleep(60)
+            sleep(60) # 60 seconds to wait until the app runs again
             self.run_again()
 
         else:
-            print('No wifi connection')
+            logger.warn('No wifi connection')
 
     def sendRequest(self, distance):
-        print('Sending request...')
-        api_url = 'http://192.168.0.9:3000/api/iot/notification'
+        """Send a request to the server"""
+        logger.debug('Sending request...')
+        api_url = config.API_URL
 #       message = 'Distance around : ' + str(distance)
         message = 'El agua ya we'
         payload = {'message': message}
 
         try:
-            print(payload)
+            logger.debug(payload)
             headers = {'Content-Type':'application/json', 'Accept': 'application/json'}
             data = (json.dumps(payload)).encode()
             response = urequests.post(api_url, data=data, headers=headers)
-            print('Response:', response.json)
+            logger.debug(response.json())
             return True
         except Exception as e:
-            print('Error: ',e)
+            logger.error(e)
             return False
 
 if __name__ == '__main__':
