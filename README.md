@@ -60,10 +60,14 @@ Para más referencias sobre conexiones del sensor etc. Consulte el siguiente [en
 ### Resultados
 
 #### Sensor 
-![sensor](./evidence/sensor.jpg)
-![server](./evidence/server.jpg)
-![log](./evidence/log_notificacion.jpg)
-![notificacion](./evidence/notificacion.jpg)
+<img src="./evidence/sensor.jpg" alt="alt text" style="width:50%; height:60%">
+
+<img src="./evidence/server.jpg" alt="alt text" style="width:50%; height:60%">
+
+<img src="./evidence/log_notificacion.jpg" alt="alt text" style="width:50%; height:60%">
+
+<img src="./evidence/notificacion.jpg" alt="alt text" style="width:50%; height:100%">
+
 
 El video lo puede ver [aquí](https://youtu.be/7-4bvA9pIbk)
 
